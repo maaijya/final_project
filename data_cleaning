@@ -1,0 +1,66 @@
+#import relevant packages and rename them
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_squared_error 
+##
+#import dataset containing music and data set containing gender
+df_music = pd.read_excel("C:/Users/Maya/Documents/Workshop Python/Dataset_Music.xlsx")
+df_gender = pd.read_excel("C:/Users/Maya/Documents/Workshop Python/Dataset_Gender.xlsx")
+##
+#check properties of both datasets
+df_music.head()
+df_music.shape # (2000, 18)
+df_music.describe
+df_music.dtypes
+df_music.columns
+df_gender.head()
+df_gender.shape # (10000, 13)
+df_gender.describe
+df_gender.dtypes
+##
+#drop irrelevant columns from gender dataset
+df_gender = df_gender.drop(['Column1','country','age','city_1','district_1','city_2','district_2','city_3','district_3'], axis=1)
+df_gender
+##
+#delete rows with NaN values from gender data set
+df_gender = df_gender.dropna(axis=0)
+df_gender
+##
+#delete artists that are not defined as 'person' in column 'type'
+df_gender = df_gender[df_gender.type == 'person']
+df_gender
+##
+#drop irrelevant columns from music dataset
+df_music = df_music.drop(['duration_ms','danceability', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'energy'], axis=1)
+df_music
+##
+#delete rows with NaN values from music data set
+df_music = df_music.dropna(axis=0)
+df_music
+##
+#combine datasets music and gender and drop irrelevant columns
+df_combined = pd.merge(df_music, df_gender, on = "artist")
+df_combined = df_combined.drop(['index', 'type'], axis = 1)
+df_combined
+##
+#check whether the merge was performed done correct by checking whether the intersection value matches the value of the combined data set
+print(len(df_music['artist'].unique()))
+print(len(df_gender['artist'].unique()))
+print(len(df_combined['artist'].unique()))
+len(set(df_gender['artist'].unique()).intersection(set(df_music['artist'].unique())))
+##
+#delete duplicate values in 'artist' by sorting 'popularity' and keeping the most populair song from the duplicate artists
+df_combined = df_combined.sort_values(by = 'popularity', ascending = False)
+df_combined = df_combined.drop_duplicates(subset = 'artist', keep = "first")
+df_combined # (388,7)
+##
+#transform boolean values in 'arist' to integers (True = 1, False = 0) to prepare data for visualization
+df_combined["explicit"] = df_combined["explicit"].astype(int)
+##
+#count songs with (= 1) and without (= 0) explicit content and create a piechart
+explicit = df_combined['explicit'].value_counts()
+plt.pie(explicit, labels=explicit.index, autopct='%.1f%%')
+plt.show()
+##
