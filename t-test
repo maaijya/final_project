@@ -1,0 +1,116 @@
+#import relevant packages and rename them
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_squared_error 
+import re
+from scipy.stats import ttest_ind
+
+#import dataset containing containing gender
+df_gender = pd.read_excel("C:/Users/Maya/Documents/Workshop Python/Dataset_Gender.xlsx")
+
+#check properties of gender dataset
+df_gender.head()
+df_gender.shape # (10000, 13)
+df_gender.describe
+df_gender.dtypes
+
+#check properties of gender dataset
+df_gender.head()
+df_gender.shape # (10000, 13)
+df_gender.describe
+df_gender.dtypes
+
+#check properties of gender dataset
+df_gender.head()
+df_gender.shape # (10000, 13)
+df_gender.describe
+df_gender.dtypes
+
+#considering that a large part of the data has NaN values, and checking by hand what the 'gender' and 'type' of the artists with NaN values is would require a lot of time, we decided to delete rows with NaN values from the gender dataset
+df_gender = df_gender.dropna(axis=0)
+df_gender
+
+#considering that a large part of the data has NaN values, and checking by hand what the 'gender' and 'type' of the artists with NaN values is would require a lot of time, we decided to delete rows with NaN values from the gender dataset
+df_gender = df_gender.dropna(axis=0)
+df_gender
+
+#check whether the former step was done correctly, by checking the values in the relevant columns
+df_gender["gender"].unique() #'female', 'male'
+df_gender["type"].unique() #'person'
+
+#import dataset containing music
+df_music = pd.read_excel("C:/Users/Maya/Documents/Workshop Python/Dataset_Music.xlsx")
+
+#check properties of music dataset
+df_music.head()
+df_music.shape # (2000, 18)
+df_music.describe
+df_music.dtypes
+df_music.columns
+
+#drop irrelevant columns from music dataset
+df_music = df_music.drop(['duration_ms','danceability', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'energy'], axis=1)
+df_music
+
+#check if there are NaN values in the music data set
+df_music.isnull().sum() #0
+
+#combine datasets music and gender and drop irrelevant columns
+df_combined = pd.merge(df_music, df_gender, on = "artist")
+df_combined = df_combined.drop(['index', 'type'], axis = 1)
+df_combined
+
+#check whether the merge was done correctly by checking whether the intersection value matches the value of the combined data set
+print(len(df_music['artist'].unique()))
+print(len(df_gender['artist'].unique()))
+print(len(df_combined['artist'].unique()))
+
+#delete duplicate values in 'artist' by sorting 'popularity' and keeping the most populair song from the duplicate artists
+df_combined = df_combined.sort_values(by = 'popularity', ascending = False)
+df_combined = df_combined.drop_duplicates(subset = 'artist', keep = "first")
+df_combined # (388,7)
+
+#transform boolean values in 'explicit' to integers (True = 1, False = 0) to prepare data for visualization
+df_combined["explicit"] = df_combined["explicit"].astype(int)
+
+##########MOET WORDEN AANGEPAST -> TWEE APARTE PIE CHARTS count songs with (= 1) and without (= 0) explicit content and create a piechart
+explicit_piechart = df_combined.groupby('gender')['explicit'].value_counts()
+plt.pie(explicit_piechart, labels=explicit_piechart.index, autopct='%.1f%%')
+plt.show()
+
+#count the amount of male and female artists
+df_combined['gender'].value_counts()['male'] #796
+df_combined['gender']. value_counts()['female'] #437
+
+#perform t-test to find out whether male or female artists use more explicit content in their songs and start by defining samples
+group_male = df_combined[df_combined['gender']=='male']
+group_female = df_combined[df_combined['gender']=='female']
+
+#check the mean (=m) and standard deviation (=sd) of each group for the column 'explicit'
+##########MOET WORDEN AANGEPAST -> T-TEST ALLEEN VOOR EXPLICIT SONGS
+male_mean = group_male['explicit'].mean()
+male_sd = group_male['explicit'].std() #mean = 0.416, sd = 0.493
+female_mean = group_female['explicit'].mean()
+female_sd = group_female['explicit'].std() #mean = 0.197, sd = 0.398
+
+#perform the t-test -> as can be seen there is no significant difference
+ttest_ind(group_male['explicit'], group_female['explicit'])
+
+#plot bargraphs to visualize the data and the results of the t-test
+plt.bar(0, male_mean, color = "orange") 
+plt.bar(1, female_mean, color = "purple")
+
+#calculate the standard errors
+se1 = male_sd/np.sqrt(len(group_male)) 
+se2 = female_sd/np.sqrt(len(group_female))
+
+#include mean and standarderrors in the graph -> as can be seen, the standarderrors don't overlap, meaning that there indeed is no significant difference between female and male artists when using explicit content
+plt.errorbar(0, male_mean, se1, capsize=100, color="black") 
+plt.errorbar(1, female_mean, se2, capsize=100, color="black")
+len(set(df_gender['artist'].unique()).intersection(set(df_music['artist'].unique())))
+
+
+
+
