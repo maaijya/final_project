@@ -1,0 +1,152 @@
+import numpy as np
+import pandas as pd
+import matplotlib as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split 
+from sklearn.metrics import confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import mean_squared_error
+
+import seaborn as sns
+
+import openpyxl
+
+import re
+
+#import top10k
+data_frame1 = pd.read_csv("/Users/mattia/Downloads/top10k-spotify-artist-metadata.csv")
+data_frame1.head()
+
+#drop unnecessary columns   
+gender = data_frame1.drop(columns=['Unnamed: 0', 'city_1', 'district_1', 'city_2', 'district_2', 'city_3', 'district_3'])
+gender
+
+#Drop 'type' == 'person'
+gender = gender[gender.type == 'person']
+gender
+
+#drop duplicates under 'artist'   9832 rows x 6 columns
+gender = gender.drop_duplicates(subset=['artist'])
+gender
+
+#drop rows with at least one 'NaN'   6349 rows x 6 columns
+gender = gender.dropna()
+gender
+
+#Download File with explicit content
+data_frame2 = pd.read_excel("/Users/mattia/Erasmus/Premaster/Python/data_for_project.xlsm")
+data_frame2
+
+#Drop unnecessary columns
+explicit = data_frame2.drop(columns=['duration_ms', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'energy'])
+#drop duplicates
+explicit = explicit.drop_duplicates(subset=['artist'])
+#drop NaN
+explicit = explicit.dropna()
+explicit
+
+#save rows for which values in column 'explicit' = TRUE in dataframe 'exT' 
+exT = explicit[(explicit["explicit"] == True)]
+exT
+
+#reset index
+exT = exT.reset_index()
+exT
+
+#save rows for which values in column 'explicit' = False in dataframe 'exF'
+exF = explicit[(explicit['explicit'] == False)]
+exF = exF.reset_index()
+exF
+
+#First we will looop throught exT
+
+#create empty list 'frequency', loop through all rows of 'exT', split values of genre, either create new key or add 1 as value
+frequency = {}
+max = len(exT)
+for x in range(max):
+    items = re.split(",", exT.loc[int(x):int(x),"genre"].values[0])
+    #print (x,items)
+    for item in items:
+        #print (item)
+        if item in frequency:
+            frequency[item] += 1
+        else:
+            frequency[item] = 1
+            
+frequency
+
+#find and list all possible years
+
+years = explicit["year"].unique().tolist()
+years.sort()
+years
+
+#Create a list, with years as 'key', and genre as key within the key with counts of genres as values for exT
+#1. create new list 'mylistT', 2. assign var. 'max' to count number of years found (so it knows how often
+#- it must iterate) 3.Iterate through every year 4. use before found loop to link values found to years. 
+
+mylistT = []
+max = len(years)
+for year in range(max):
+    #print (year,years[year])
+    exT = explicit[(explicit["year"] == years[year])]
+    exT = exT[(exT["explicit"] == True)]
+    exT = exT.reset_index()
+    
+    frequency = {}
+    max2 = len(exT)
+    for x in range(max2):
+        items = re.split(",", exT.loc[int(x):int(x),"genre"].values[0])
+        #print (x,items)
+        for item in items:
+            #print (item)
+            if item in frequency:
+                frequency[item] += 1
+            else:
+                frequency[item] = 1
+    
+    mylistT.append([years[year],frequency])
+
+    print(mylistT[year])
+    
+mylistT
+
+Falsefreq = {}
+loop = len(exF)
+for y in range(loop):
+    values = re.split(",", exF.loc[int(y):int(y),"genre"].values[0])
+    #print(y, values)
+    for value in values:
+        #print(value)
+        if value in Falsefreq:
+            Falsefreq[value] += 1
+        else:
+            Falsefreq[value] = 1
+            
+mylistF =[]
+max = len(years)
+for year in range(max):
+    #print(year, years[year])
+    exF = explicit[(explicit["year"] == years[year])]
+    exF = exF[(exF["explicit"] == True)]
+    exF = exF.reset_index()
+    #print(exF)
+    
+    Falsefreq = {}
+    loop = len(exF)
+    for y in range(loop):
+        values = re.split(",", exF.loc[int(y):int(y),"genre"].values[0])
+        #print(y, values)
+        for value in values:
+            #print(value)
+            if value in Falsefreq:
+                Falsefreq[value] += 1
+            else:
+                Falsefreq[value] = 1
+    
+    mylistF.append([years[year],Falsefreq])
+    
+    print(mylistF[year])
+ 
+
+    
